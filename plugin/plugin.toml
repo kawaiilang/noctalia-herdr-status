@@ -1,0 +1,26 @@
+id = "kawaiilang/herdr-status"
+name = "Herdr Status"
+version = "1.0.0"
+plugin_api = 54
+author = "kawaiilang"
+license = "MIT"
+description = "Read-only Herdr TUI session status with pane focus jump to its terminal window."
+icon = "terminal-2"
+tags = ["bar", "panel", "development", "utility"]
+
+[[widget]]
+id = "bar"
+entry = "widget.luau"
+
+[[panel]]
+id = "panel"
+entry = "panel.luau"
+width = 420
+height = 500
+placement = "attached"
+position = "auto"
+open_near_click = true
+
+[[service]]
+id = "status"
+entry = "service.luau"
