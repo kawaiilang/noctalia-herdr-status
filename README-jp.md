@@ -52,8 +52,16 @@ Home Manager モジュールを読み込んで有効化します:
 
 ## 開発・テスト
 
+Python テスト、Ruff、Pyright、Luau プラグインのテストをまとめて実行します。
+
 ```bash
 nix flake check
+```
+
+Luau だけを検証するには、プラグインをビルドします。`service`・`widget`・`panel` をコンパイルし、それぞれのテストを Noctalia API のモックで実行します。
+
+```bash
+nix build --no-link --print-build-logs .#plugin
 ```
 
 Python テスト単体の実行:

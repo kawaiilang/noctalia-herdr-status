@@ -52,8 +52,16 @@ The plugin ID is `kawaiilang/herdr-status` and the widget type is `kawaiilang/he
 
 ## Development & Testing
 
+Run the Python tests, Ruff, Pyright and Luau plugin tests together with one command.
+
 ```bash
 nix flake check
+```
+
+To run just the Luau checks, build the plugin. The build compiles `service`, `widget` and `panel`, then runs their tests against a mock Noctalia API.
+
+```bash
+nix build --no-link --print-build-logs .#plugin
 ```
 
 Or run the Python test suite directly:
