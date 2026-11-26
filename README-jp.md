@@ -52,9 +52,17 @@ Home Manager モジュールを読み込んで有効化します:
 
 ## 開発・テスト
 
-Python テスト、Ruff、Pyright、Luau プラグインのテストをまとめて実行します。
+リポジトリのルートで開発シェルに入ると、Python・Luau と lint ツールを使えます。たとえば、編集したプラグインファイルをコンパイルできます。
 
 ```bash
+nix develop
+luau-compile --null plugin/service.luau
+```
+
+Nix ファイルを整形し、Python・Luau のテスト、Ruff、Pyright、Nix の静的解析をまとめて実行します。
+
+```bash
+nix fmt
 nix flake check
 ```
 

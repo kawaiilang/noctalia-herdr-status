@@ -1,18 +1,15 @@
 {
   description = "Read-only Herdr TUI session status plugin and helper for Noctalia";
 
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-  };
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
   outputs =
     { self, nixpkgs }:
     let
-      systems = [
+      forAllSystems = nixpkgs.lib.genAttrs [
         "x86_64-linux"
         "aarch64-linux"
       ];
-      forAllSystems = nixpkgs.lib.genAttrs systems;
 
       mkHelper =
         {
@@ -22,15 +19,14 @@
         }:
         let
           inherit (pkgs) lib;
-          extraFlags =
-            [
-              "--lsfd"
-              (lib.getExe' lsfdPackage "lsfd")
-            ]
-            ++ lib.optionals (umbrielPackage != null) [
-              "--umbriel"
-              (lib.getExe umbrielPackage)
-            ];
+          extraFlags = [
+            "--lsfd"
+            (lib.getExe' lsfdPackage "lsfd")
+          ]
+          ++ lib.optionals (umbrielPackage != null) [
+            "--umbriel"
+            (lib.getExe umbrielPackage)
+          ];
         in
         pkgs.python3Packages.buildPythonApplication {
           pname = "noctalia-herdr-status";
@@ -82,11 +78,27 @@
             luau "$entry-test.luau"
           done
         '';
+
+      lintTools =
+        pkgs:
+        let
+          python = pkgs.python3;
+          lintPackages = [
+            python
+            pkgs.ruff
+            pkgs.pyright
+            pkgs.nixfmt
+            pkgs.statix
+            pkgs.deadnix
+          ];
+        in
+        {
+          inherit python lintPackages;
+          packages = lintPackages ++ [ pkgs.luau ];
+        };
     in
     {
-      lib = {
-        inherit mkHelper mkPlugin;
-      };
+      lib = { inherit mkHelper mkPlugin; };
 
       packages = forAllSystems (
         system:
@@ -98,6 +110,21 @@
         {
           inherit helper plugin;
           default = plugin;
+        }
+      );
+
+      formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-tree);
+
+      devShells = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          tools = lintTools pkgs;
+        in
+        {
+          default = pkgs.mkShellNoCC {
+            inherit (tools) packages;
+          };
         }
       );
 
@@ -171,8 +198,18 @@
         let
           pkgs = nixpkgs.legacyPackages.${system};
           inherit (pkgs) lib;
-          helper = self.packages.${system}.helper;
-          plugin = self.packages.${system}.plugin;
+          inherit (self.packages.${system}) helper plugin;
+          tools = lintTools pkgs;
+          lintSrc = lib.fileset.toSource {
+            root = ./.;
+            fileset = lib.fileset.unions [
+              ./flake.nix
+              ./pyproject.toml
+              ./pyrightconfig.json
+              ./src
+              ./tests
+            ];
+          };
         in
         {
           inherit plugin;
@@ -180,7 +217,7 @@
           python-tests =
             pkgs.runCommand "noctalia-herdr-status-python-tests"
               {
-                nativeBuildInputs = [ pkgs.python3 ];
+                nativeBuildInputs = [ tools.python ];
               }
               ''
                 export PYTHONDONTWRITEBYTECODE=1
@@ -190,22 +227,16 @@
                 touch "$out"
               '';
 
-          lint =
-            pkgs.runCommand "noctalia-herdr-status-lint"
-              {
-                nativeBuildInputs = [
-                  pkgs.python3
-                  pkgs.ruff
-                  pkgs.pyright
-                ];
-              }
-              ''
-                cd ${./.}
-                export HOME="$TMPDIR"
-                ruff check --no-cache src tests
-                pyright --project pyrightconfig.json --pythonpath ${lib.getExe pkgs.python3}
-                touch "$out"
-              '';
+          lint = pkgs.runCommand "noctalia-herdr-status-lint" { nativeBuildInputs = tools.lintPackages; } ''
+            export HOME="$TMPDIR"
+            cd ${lintSrc}
+            ruff check --no-cache src tests
+            pyright --project pyrightconfig.json --pythonpath ${lib.getExe tools.python}
+            nixfmt --check flake.nix
+            statix check .
+            deadnix --fail flake.nix
+            touch "$out"
+          '';
         }
       );
     };

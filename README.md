@@ -52,9 +52,19 @@ The plugin ID is `kawaiilang/herdr-status` and the widget type is `kawaiilang/he
 
 ## Development & Testing
 
-Run the Python tests, Ruff, Pyright and Luau plugin tests together with one command.
+From the repository root, enter the development shell to use Python, Luau
+and the linters. For example, compile a plugin file after editing it:
 
 ```bash
+nix develop
+luau-compile --null plugin/service.luau
+```
+
+Format the Nix files and run the Python and Luau tests, Ruff, Pyright
+and Nix static checks:
+
+```bash
+nix fmt
 nix flake check
 ```
 
