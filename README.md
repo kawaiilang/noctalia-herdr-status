@@ -60,6 +60,9 @@ nix develop
 luau-compile --null plugin/service.luau
 ```
 
+With the direnv hook enabled, run `direnv allow` once in the repository root
+to load the same shell automatically whenever you enter this checkout.
+
 Format the Nix files and run the Python and Luau tests, Ruff, Pyright
 and Nix static checks:
 

@@ -59,6 +59,8 @@ nix develop
 luau-compile --null plugin/service.luau
 ```
 
+シェルで direnv フックが有効なら、リポジトリのルートで一度 `direnv allow` を実行すると、以後はこのディレクトリに入るたびに同じ開発環境が自動で読み込まれます。
+
 Nix ファイルを整形し、Python・Luau のテスト、Ruff、Pyright、Nix の静的解析をまとめて実行します。
 
 ```bash
